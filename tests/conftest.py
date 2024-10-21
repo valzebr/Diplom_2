@@ -2,6 +2,7 @@ import pytest
 import allure
 import requests
 from faker import Faker
+from endpoints import Endpoints
 
 # функция генерации фэйковых валидных данных
 @staticmethod
