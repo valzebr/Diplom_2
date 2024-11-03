@@ -1,7 +1,9 @@
 import pytest
 import requests
 import allure
+
 from endpoints import Endpoints
+from data import Const
 
 
 class TestLoginUser:
@@ -11,7 +13,7 @@ class TestLoginUser:
     def test_login_user_success(self, user):
         response = requests.post(Endpoints.login_api, data=user[0])
 
-        assert response.status_code == 200
+        assert response.status_code == Const.STATUS_OK
         assert response.json()['success'] is True
         assert 'accessToken' in response.json()
         assert 'refreshToken' in response.json()
@@ -25,7 +27,7 @@ class TestLoginUser:
         user[0][wrong_field] += user[0][wrong_field]
         response = requests.post(Endpoints.login_api, data=user[0])
 
-        assert response.status_code == 401
-        assert response.reason == 'Unauthorized'
+        assert response.status_code == Const.ERROR_AUTHORIZED
+        assert response.reason == Const.REASON_UNAUTHORIZED
         assert response.json()["success"] is False
-        assert response.json()["message"] == "email or password are incorrect"
+        assert response.json()["message"] == Const.TEXT_INCORRECT_CREDENTIALS

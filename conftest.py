@@ -1,11 +1,11 @@
 import pytest
 import allure
-import requests
 from faker import Faker
-from endpoints import Endpoints
+
+from data import register_user, delete_user, create_order
 
 # функция генерации фэйковых валидных данных
-@staticmethod
+@pytest.fixture(scope='function')
 def generating_fake_valid_data_to_create_user():
     fake = Faker("ru_RU")
     email = fake.email()
@@ -16,15 +16,15 @@ def generating_fake_valid_data_to_create_user():
         "password": password,
         "name": name
     }
-
     return data
 
 @pytest.fixture(scope='function')
-def generate_user():
-    creds = generating_fake_valid_data_to_create_user()
+def generate_user(generating_fake_valid_data_to_create_user):
+    creds = generating_fake_valid_data_to_create_user
     return creds
 
 
+@allure.step('Регистрируем пользователя с последующим удалением')
 @pytest.fixture(scope='function')
 def user(generate_user):
     response = register_user(generate_user)
@@ -32,15 +32,8 @@ def user(generate_user):
     yield generate_user, access_token
     delete_user(access_token)
 
-
-
-@allure.step('Регистрация пользователя')
-def register_user(payload):
-    response = requests.post(Endpoints.register_api, data=payload)
-    return response
-
-
-@allure.step('Удаление пользователя')
-def delete_user(access_token):
-    requests.delete(Endpoints.user_api, headers={"Authorization": access_token})
-
+@allure.step('Создание заказа')
+@pytest.fixture
+def order(user):
+    user_data, access_token = user
+    create_order(access_token)

@@ -1,28 +1,35 @@
 import pytest
 import requests
 import allure
-from conftest import Endpoints, generating_fake_valid_data_to_create_user
 
-@allure.title('Изменение данных пользователя с авторизацией')
-@pytest.mark.parametrize("updated_data", [
-    generating_fake_valid_data_to_create_user(),
-    generating_fake_valid_data_to_create_user(),
-])
-def test_update_user_data_with_auth(user, updated_data):
-    generate_user, access_token = user
-    response = requests.patch(Endpoints.user_api, json=updated_data, headers={"Authorization": access_token})
-    assert response.status_code == 200
-    assert response.json()['user']['email'] == updated_data['email']
-    assert response.json()['user']['name'] == updated_data['name']
+from endpoints import Endpoints
+from data import Const
 
 
-@allure.title('Изменение данных пользователя без авторизации')
-@pytest.mark.parametrize("updated_data", [
-    generating_fake_valid_data_to_create_user(),
-    generating_fake_valid_data_to_create_user(),
-])
-def test_update_user_data_without_auth(updated_data):
-    response = requests.patch(Endpoints.user_api, json=updated_data)
-    assert response.status_code == 401
-    assert response.json()['success'] is False
-    assert response.json()['message'] == "You should be authorised"
+class TestChangeUserData:
+
+    @allure.title('Изменение данных пользователя с авторизацией')
+    @pytest.mark.parametrize('edited_field', ['email', 'name', 'password'])
+    def test_update_user_data_with_auth(self, user, edited_field, generating_fake_valid_data_to_create_user):
+        user_data, access_token = user
+        new_creds = generating_fake_valid_data_to_create_user
+        user_data[edited_field] = new_creds[edited_field]
+        response = requests.patch(Endpoints.user_api, headers={"Authorization": access_token}, json=user_data)
+
+        assert response.status_code == Const.STATUS_OK
+        assert response.json()['success'] is True
+        assert 'email' in response.json()['user']
+        assert 'name' in response.json()['user']
+
+    @allure.title('Изменение данных пользователя без авторизации')
+    @pytest.mark.parametrize('edited_field', ['email', 'name', 'password'])
+    def test_update_user_data_without_auth(self, user, edited_field, generating_fake_valid_data_to_create_user):
+        user_data, access_token = user
+        new_creds = generating_fake_valid_data_to_create_user
+        user_data[edited_field] = new_creds[edited_field]
+        response = requests.patch(Endpoints.user_api, json=user_data)
+
+
+        assert response.status_code == Const.ERROR_AUTHORIZED
+        assert response.json()['success'] is False
+        assert response.json()["message"] == Const.TEXT_UNAUTHORIZED

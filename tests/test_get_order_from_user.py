@@ -1,7 +1,8 @@
-import pytest
 import requests
 import allure
-from conftest import user, Endpoints
+
+from endpoints import Endpoints
+from data import Const
 
 class TestGetOrders:
 
@@ -10,13 +11,13 @@ class TestGetOrders:
         generate_user, access_token = user
         response = requests.get(Endpoints.orders_api, headers={"Authorization": access_token})
 
-        assert response.status_code == 200
+        assert response.status_code == Const.STATUS_OK
         assert response.json()['success'] is True
 
     @allure.title('Получение заказа без авторизации')
     def test_get_orders_without_auth(self):
         response = requests.get(Endpoints.orders_api)
 
-        assert response.status_code == 401
+        assert response.status_code == Const.ERROR_AUTHORIZED
         assert response.json()['success'] is False
-        assert response.json()['message'] == "You should be authorised"
+        assert response.json()['message'] == Const.TEXT_UNAUTHORIZED
